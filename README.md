@@ -36,14 +36,18 @@ When you name series data, you first have to use your Api via "fredapi" in pytho
 ### Structure
 This will be setup pretty much the same as most timeseries LSTM's via torch.
 ```python
+
+data = data.shift(1)
+data.dropna(inplace=True)
 training = data.iloc[:,0:1].values
 
 
 
-train_split = int(len(training) * .70)
+train_split = int(len(training) * .85)
 train_data = training[:train_split]
 test_data = training[train_split:]
-
+print(train_data.shape)
+print(test_data.shape)
 
 scaler = MinMaxScaler()
 train_data = scaler.fit_transform(train_data)
@@ -93,7 +97,7 @@ class LSTM(nn.Module):
 
 
 
-model = LSTM(input_size=1,hidden_size=64,num_layers=1,output_size=1)
+model = LSTM(input_size=1,hidden_size=512,num_layers=1,output_size=1)
 optimizer = torch.optim.Adam(model.parameters(),lr=0.002)
 loss_fn = nn.MSELoss()
 epochs = 500
@@ -113,75 +117,61 @@ for epoch in range(epochs):
         y_pred_test =  model(X_test)
         test_rsme = np.sqrt(loss_fn(y_pred_test,y_test))
         print(f'Epoch: {epoch}; train_RSEM: {train_rsme:.4}; Test RSME: {test_rsme:.4}')
+
+
+
+
 ```
 I do not simply use "seq_length = 1" every single time I forecast. The only reason is that the train size for the split was very good to run 500 epochs for the lstm and I did not see any harm
 
 ### results after training
-```python
-with torch.no_grad():
-    pred = model(X_test)
-    pred_np = pred.cpu().numpy()
-    y_test_np = y_test.cpu().numpy()
-    pred_rescaled = scaler.inverse_transform(pred_np)
-    actual_rescaled = scaler.inverse_transform(y_test_np)
 
-
-test_dates = data.iloc[train_split + seq_length:-1]['Date'].reset_index(drop=True)
-
-comparison_df = pd.DataFrame({
-    "Date": test_dates,
-    "Actual Interest Rate": actual_rescaled.flatten(),
-    "Predicted Interest Rate": pred_rescaled.flatten()
-})
-
-print(comparison_df.tail(20))
-```
 
 ### Predicted Vs Actual Federal Fund's Rates
 
 ```text
-Date  Actual Interest Rate  Predicted Interest Rate
-0  2004-03-01                  1.00                 1.255862
-1  2004-04-01                  1.00                 1.246838
-2  2004-05-01                  1.00                 1.246838
-3  2004-06-01                  1.03                 1.246838
-4  2004-07-01                  1.26                 1.273913
-5  2004-08-01                  1.43                 1.481956
-6  2004-09-01                  1.61                 1.636256
-7  2004-10-01                  1.76                 1.800118
-8  2004-11-01                  1.93                 1.937050
-9  2004-12-01                  2.16                 2.092651
-10 2005-01-01                  2.28                 2.303862
-11 2005-02-01                  2.50                 2.414372
-12 2005-03-01                  2.63                 2.617525
-13 2005-04-01                  2.79                 2.737904
-14 2005-05-01                  3.00                 2.886398
-15 2005-06-01                  3.04                 3.081854
-16 2005-07-01                  3.26                 3.119155
-17 2005-08-01                  3.50                 3.324714
-18 2005-09-01                  3.62                 3.549733
-19 2005-10-01                  3.78                 3.662541
+         Date  Actual Interest Rate  Predicted Interest Rate
+0  2014-10-01                  0.09                 0.106762
+1  2014-11-01                  0.09                 0.106762
+2  2014-12-01                  0.12                 0.106762
+3  2015-01-01                  0.11                 0.136875
+4  2015-02-01                  0.11                 0.126837
+5  2015-03-01                  0.11                 0.126837
+6  2015-04-01                  0.12                 0.126837
+7  2015-05-01                  0.12                 0.136875
+8  2015-06-01                  0.13                 0.136875
+9  2015-07-01                  0.13                 0.146912
+10 2015-08-01                  0.14                 0.146912
+11 2015-09-01                  0.14                 0.156949
+12 2015-10-01                  0.12                 0.156949
+13 2015-11-01                  0.12                 0.136875
+14 2015-12-01                  0.24                 0.136875
+15 2016-01-01                  0.34                 0.257310
+16 2016-02-01                  0.38                 0.357655
+17 2016-03-01                  0.36                 0.397789
+18 2016-04-01                  0.37                 0.377722
+19 2016-05-01                  0.37                 0.387756
           Date  Actual Interest Rate  Predicted Interest Rate
-234 2023-09-01                  5.33                 5.290770
-235 2023-10-01                  5.33                 5.290770
-236 2023-11-01                  5.33                 5.290770
-237 2023-12-01                  5.33                 5.290770
-238 2024-01-01                  5.33                 5.290770
-239 2024-02-01                  5.33                 5.290770
-240 2024-03-01                  5.33                 5.290770
-241 2024-04-01                  5.33                 5.290770
-242 2024-05-01                  5.33                 5.290770
-243 2024-06-01                  5.33                 5.290770
-244 2024-07-01                  5.33                 5.290770
-245 2024-08-01                  5.33                 5.290770
-246 2024-09-01                  5.13                 5.290770
-247 2024-10-01                  4.83                 5.098405
-248 2024-11-01                  4.64                 4.810790
-249 2024-12-01                  4.48                 4.629220
-250 2025-01-01                  4.33                 4.476680
-251 2025-02-01                  4.33                 4.333973
-252 2025-03-01                  4.33                 4.333973
-253 2025-04-01                  4.33                 4.333973
+106 2023-08-01                  5.33                 5.132757
+107 2023-09-01                  5.33                 5.341501
+108 2023-10-01                  5.33                 5.341501
+109 2023-11-01                  5.33                 5.341501
+110 2023-12-01                  5.33                 5.341501
+111 2024-01-01                  5.33                 5.341501
+112 2024-02-01                  5.33                 5.341501
+113 2024-03-01                  5.33                 5.341501
+114 2024-04-01                  5.33                 5.341501
+115 2024-05-01                  5.33                 5.341501
+116 2024-06-01                  5.33                 5.341501
+117 2024-07-01                  5.33                 5.341501
+118 2024-08-01                  5.33                 5.341501
+119 2024-09-01                  5.13                 5.341501
+120 2024-10-01                  4.83                 5.142699
+121 2024-11-01                  4.64                 4.844336
+122 2024-12-01                  4.48                 4.655277
+123 2025-01-01                  4.33                 4.496009
+124 2025-02-01                  4.33                 4.346649
+125 2025-03-01                  4.33                 4.3466493
 ```
 
 ![predicted_actual](images\predicted-vs-actual.png)
