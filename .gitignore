@@ -1,4 +1,3 @@
-.spyproject/
 *.pyc
 __pycache__/
 *.pyo
