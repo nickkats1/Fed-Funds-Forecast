@@ -37,7 +37,6 @@ When you name series data, you first have to use your Api via "fredapi" in pytho
 This will be setup pretty much the same as most timeseries LSTM's via torch.
 ```python
 
-data = data.shift(1)
 data.dropna(inplace=True)
 training = data.iloc[:,0:1].values
 
@@ -46,8 +45,8 @@ training = data.iloc[:,0:1].values
 train_split = int(len(training) * .88)
 train_data = training[:train_split]
 test_data = training[train_split:]
-print(train_data.shape)
-print(test_data.shape)
+print(f' Shape of training data: {train_data.shape}')
+print(f' Shape of testing data: {test_data.shape}')
 
 scaler = MinMaxScaler()
 train_data = scaler.fit_transform(train_data)
@@ -55,14 +54,14 @@ test_data = scaler.transform(test_data)
 
 def slider(dataframe, seq_length):
     X, y = [], []
-    for i in range(len(dataframe) - seq_length - 1):
+    for i in range(len(dataframe) - seq_length):
         X_ = dataframe[i:(i + seq_length)]
         y_ = dataframe[i + seq_length]
         X.append(X_)
         y.append(y_)
     return np.array(X), np.array(y)
 
-seq_length = 7
+seq_length = 12
 
 X_train, y_train = slider(train_data, seq_length)
 X_test,y_test = slider(test_data,seq_length)
@@ -73,8 +72,6 @@ y_train = torch.from_numpy(y_train).float()
 
 X_test = torch.from_numpy(X_test).float()
 y_test = torch.from_numpy(y_test).float()
-
-
 
 
 
@@ -91,69 +88,72 @@ class BiLSTM(nn.Module):
     def forward(self, X):
         h0 = torch.zeros(2 * self.num_layers, X.size(0), self.hidden_size)
         c0 = torch.zeros(2 * self.num_layers, X.size(0), self.hidden_size)
-        out, _ = self.lstm(X, (h0, c0))
-        out = self.fc(out[:, -1, :])
+        out, _ = self.lstm(X,(h0, c0))
+        out = self.fc(out[:,-1,:])
         return out
 
 
 
-model = BiLSTM(input_size=1,hidden_size=128,num_layers=2,output_size=1)
-optimizer = torch.optim.Adam(model.parameters(),lr=0.001)
-loss_fn = nn.MSELoss()
+bidirectional_lstm = BiLSTM(input_size=1,hidden_size=128,num_layers=2,output_size=1)
 epochs = 500
+learning_rate = 0.001
+bilistm_optimizer = torch.optim.Adam(params=bidirectional_lstm.parameters(),lr=learning_rate)
+loss_fn = nn.MSELoss()
 ```
 
 
 
 
-### Predicted Vs Actual Fed Funds Rate using Bidirectional LSTM
+### Predicted Vs Actual Fed Funds Rate (BiLSTM)
 
 ```text
-         Date  Actual Interest Rate  Predicted Interest Rate
-0  2017-06-01                  1.04                 0.992218
-1  2017-07-01                  1.15                 1.114385
-2  2017-08-01                  1.16                 1.238771
-3  2017-09-01                  1.15                 1.272003
-4  2017-10-01                  1.15                 1.261230
-5  2017-11-01                  1.16                 1.247898
-6  2017-12-01                  1.30                 1.247165
-7  2018-01-01                  1.41                 1.365295
-8  2018-02-01                  1.42                 1.490438
-9  2018-03-01                  1.51                 1.527278
-10 2018-04-01                  1.69                 1.600128
-11 2018-05-01                  1.70                 1.759459
-12 2018-06-01                  1.82                 1.800849
-13 2018-07-01                  1.91                 1.900696
-14 2018-08-01                  1.91                 1.989218
-15 2018-09-01                  1.95                 1.998279
-16 2018-10-01                  2.19                 2.021800
-17 2018-11-01                  2.20                 2.224164
-18 2018-12-01                  2.27                 2.278809
-19 2019-01-01                  2.40                 2.339249
-         Date  Actual Interest Rate  Predicted Interest Rate
-75 2023-09-01                  5.33                 5.313292
-76 2023-10-01                  5.33                 5.343698
-77 2023-11-01                  5.33                 5.334824
-78 2023-12-01                  5.33                 5.318294
-79 2024-01-01                  5.33                 5.307239
-80 2024-02-01                  5.33                 5.308608
-81 2024-03-01                  5.33                 5.314802
-82 2024-04-01                  5.33                 5.314802
-83 2024-05-01                  5.33                 5.314802
-84 2024-06-01                  5.33                 5.314802
-85 2024-07-01                  5.33                 5.314802
-86 2024-08-01                  5.33                 5.314802
-87 2024-09-01                  5.13                 5.314802
-88 2024-10-01                  4.83                 5.120794
-89 2024-11-01                  4.64                 4.788943
-90 2024-12-01                  4.48                 4.549984
-91 2025-01-01                  4.33                 4.385576
-92 2025-02-01                  4.33                 4.253560
-93 2025-03-01                  4.33                 4.260665
-94 2025-04-01                  4.33                 4.287054
+Root Mean Squared Error: 0.0107
+R2 Score: 98.93%
+ Date  Actual Fed Funds Rate  Predicted Fed Funds Rate
+761 2017-12-01                   1.30                  1.220817
+762 2018-01-01                   1.41                  1.335365
+763 2018-02-01                   1.42                  1.454454
+764 2018-03-01                   1.51                  1.490311
+765 2018-04-01                   1.69                  1.569176
+766 2018-05-01                   1.70                  1.732006
+767 2018-06-01                   1.82                  1.771627
+768 2018-07-01                   1.91                  1.873607
+769 2018-08-01                   1.91                  1.963096
+770 2018-09-01                   1.95                  1.974071
+771 2018-10-01                   2.19                  2.000722
+772 2018-11-01                   2.20                  2.204244
+773 2018-12-01                   2.27                  2.254131
+774 2019-01-01                   2.40                  2.317508
+775 2019-02-01                   2.40                  2.432501
+776 2019-03-01                   2.41                  2.448006
+777 2019-04-01                   2.42                  2.449847
+778 2019-05-01                   2.39                  2.449577
+779 2019-06-01                   2.38                  2.417841
+780 2019-07-01                   2.40                  2.399379
+          Date  Actual Fed Funds Rate  Predicted Fed Funds Rate
+832 2023-11-01                   5.33                  5.360042
+833 2023-12-01                   5.33                  5.346322
+834 2024-01-01                   5.33                  5.338457
+835 2024-02-01                   5.33                  5.335941
+836 2024-03-01                   5.33                  5.336048
+837 2024-04-01                   5.33                  5.337097
+838 2024-05-01                   5.33                  5.338124
+839 2024-06-01                   5.33                  5.338805
+840 2024-07-01                   5.33                  5.339211
+841 2024-08-01                   5.33                  5.339392
+842 2024-09-01                   5.13                  5.339392
+843 2024-10-01                   4.83                  5.147236
+844 2024-11-01                   4.64                  4.823328
+845 2024-12-01                   4.48                  4.588309
+846 2025-01-01                   4.33                  4.414517
+847 2025-02-01                   4.33                  4.269219
+848 2025-03-01                   4.33                  4.268806
+849 2025-04-01                   4.33                  4.293983
+850 2025-05-01                   4.33                  4.315125
+851 2025-06-01                   4.33                  4.325586
 ```
 
-![predicted_actual](images\predicted-vs-actual.png)
+![predicted_actual](images/predicted-vs-actual_lstm.png)
 
 ### Predicted VS Actual Fed Funds Rate using RandomForest
 
