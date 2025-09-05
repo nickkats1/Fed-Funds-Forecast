@@ -4,7 +4,7 @@
 ```bash
 pip install fredapi torch torchvision torchaudio numpy pandas sciki-learn matplotlib seaborn catboost xgboot-cpu mlflow
 ```
-Use Fred api key
+#### Use Fred api key
 
 ```python
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
