@@ -1,21 +1,12 @@
-### Forecasting Federal Fund's Rate
-
-I used the Fred Api token to gain access to to the series data titled "FEDFUNDS". This is a pretty similar forecast compared to all of the other LSTM, torch forecasts. You need the Api key from Fred to gain access to their data. This is a forecast of the Federal Funds Rate.
+### Forecasting Fed Funds Rate Through Fred
 
 ### Requirements
 ```bash
 pip install fredapi torch torchvision torchaudio numpy pandas sciki-learn matplotlib seaborn catboost xgboot-cpu mlflow
 ```
-Make Sure, if you ever use Fred for data, to hide your Api key from the public. Put it in a .gitignore file or something else. Make sure it is not publicly available.
+Use Fred api key
 
-### Accessing Data from Fred
-When you get access to your Api key, make a .env file or a package to hide the token id.
 ```python
-
-fred = fr.Fred(fred_api_key)
-
-
-
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 print(device)
 
@@ -26,10 +17,10 @@ ffr.name = "Fed Funds Rate"
 
 data = pd.DataFrame(ffr).dropna()
 ```
-When you name series data, you first have to use your Api via "fredapi" in python(if you are using python). Then, put it in a dataframe and the rest goes as usual.
 
 
-![federal_funds_rate_plot](images/federal-funds-rate-date.png)
+
+![federal_funds_rate_plot](images/fed-funds-rate.png)
 
 
 
@@ -42,7 +33,7 @@ training = data.iloc[:,0:1].values
 
 
 
-train_split = int(len(training) * .88)
+train_split = int(len(training) * .86)
 train_data = training[:train_split]
 test_data = training[train_split:]
 print(f' Shape of training data: {train_data.shape}')
@@ -61,7 +52,7 @@ def slider(dataframe, seq_length):
         y.append(y_)
     return np.array(X), np.array(y)
 
-seq_length = 12
+seq_length = 1
 
 X_train, y_train = slider(train_data, seq_length)
 X_test,y_test = slider(test_data,seq_length)
@@ -94,7 +85,7 @@ class BiLSTM(nn.Module):
 
 
 
-bidirectional_lstm = BiLSTM(input_size=1,hidden_size=128,num_layers=2,output_size=1)
+bidirectional_lstm = BiLSTM(input_size=1,hidden_size=256,num_layers=2,output_size=1)
 epochs = 500
 learning_rate = 0.001
 bilistm_optimizer = torch.optim.Adam(params=bidirectional_lstm.parameters(),lr=learning_rate)
@@ -107,115 +98,113 @@ loss_fn = nn.MSELoss()
 ### Predicted Vs Actual Fed Funds Rate (BiLSTM)
 
 ```text
-Root Mean Squared Error: 0.0107
-R2 Score: 98.93%
- Date  Actual Fed Funds Rate  Predicted Fed Funds Rate
-761 2017-12-01                   1.30                  1.220817
-762 2018-01-01                   1.41                  1.335365
-763 2018-02-01                   1.42                  1.454454
-764 2018-03-01                   1.51                  1.490311
-765 2018-04-01                   1.69                  1.569176
-766 2018-05-01                   1.70                  1.732006
-767 2018-06-01                   1.82                  1.771627
-768 2018-07-01                   1.91                  1.873607
-769 2018-08-01                   1.91                  1.963096
-770 2018-09-01                   1.95                  1.974071
-771 2018-10-01                   2.19                  2.000722
-772 2018-11-01                   2.20                  2.204244
-773 2018-12-01                   2.27                  2.254131
-774 2019-01-01                   2.40                  2.317508
-775 2019-02-01                   2.40                  2.432501
-776 2019-03-01                   2.41                  2.448006
-777 2019-04-01                   2.42                  2.449847
-778 2019-05-01                   2.39                  2.449577
-779 2019-06-01                   2.38                  2.417841
-780 2019-07-01                   2.40                  2.399379
+Date  Actual Fed Funds Rate  Predicted Fed Funds Rate
+735 2015-10-01                   0.12                  0.101384
+736 2015-11-01                   0.12                  0.080849
+737 2015-12-01                   0.24                  0.080849
+738 2016-01-01                   0.34                  0.204033
+739 2016-02-01                   0.38                  0.306643
+740 2016-03-01                   0.36                  0.347676
+741 2016-04-01                   0.37                  0.327161
+742 2016-05-01                   0.37                  0.337419
+743 2016-06-01                   0.38                  0.337419
+744 2016-07-01                   0.39                  0.347676
+745 2016-08-01                   0.40                  0.357934
+746 2016-09-01                   0.40                  0.368190
+747 2016-10-01                   0.40                  0.368190
+748 2016-11-01                   0.41                  0.368190
+749 2016-12-01                   0.54                  0.378447
+750 2017-01-01                   0.65                  0.511744
+751 2017-02-01                   0.66                  0.624480
+752 2017-03-01                   0.79                  0.634727
+753 2017-04-01                   0.90                  0.767890
+754 2017-05-01                   0.91                  0.880513
           Date  Actual Fed Funds Rate  Predicted Fed Funds Rate
-832 2023-11-01                   5.33                  5.360042
-833 2023-12-01                   5.33                  5.346322
-834 2024-01-01                   5.33                  5.338457
-835 2024-02-01                   5.33                  5.335941
-836 2024-03-01                   5.33                  5.336048
-837 2024-04-01                   5.33                  5.337097
-838 2024-05-01                   5.33                  5.338124
-839 2024-06-01                   5.33                  5.338805
-840 2024-07-01                   5.33                  5.339211
-841 2024-08-01                   5.33                  5.339392
-842 2024-09-01                   5.13                  5.339392
-843 2024-10-01                   4.83                  5.147236
-844 2024-11-01                   4.64                  4.823328
-845 2024-12-01                   4.48                  4.588309
-846 2025-01-01                   4.33                  4.414517
-847 2025-02-01                   4.33                  4.269219
-848 2025-03-01                   4.33                  4.268806
-849 2025-04-01                   4.33                  4.293983
-850 2025-05-01                   4.33                  4.315125
-851 2025-06-01                   4.33                  4.325586
+834 2024-01-01                   5.33                  5.368036
+835 2024-02-01                   5.33                  5.368036
+836 2024-03-01                   5.33                  5.368036
+837 2024-04-01                   5.33                  5.368036
+838 2024-05-01                   5.33                  5.368036
+839 2024-06-01                   5.33                  5.368036
+840 2024-07-01                   5.33                  5.368036
+841 2024-08-01                   5.33                  5.368036
+842 2024-09-01                   5.13                  5.368036
+843 2024-10-01                   4.83                  5.167683
+844 2024-11-01                   4.64                  4.866721
+845 2024-12-01                   4.48                  4.675848
+846 2025-01-01                   4.33                  4.514956
+847 2025-02-01                   4.33                  4.363991
+848 2025-03-01                   4.33                  4.363991
+849 2025-04-01                   4.33                  4.363991
+850 2025-05-01                   4.33                  4.363991
+851 2025-06-01                   4.33                  4.363991
+852 2025-07-01                   4.33                  4.363991
+853 2025-08-01                   4.33                  4.363991
 ```
 
-![predicted_actual](images/predicted-vs-actual_lstm.png)
+
 
 ### Predicted VS Actual Fed Funds Rate using RandomForest
 
 ```text
-Predicted Vs Actual Fed Funds Rate
+Predicted Vs Actual Prices
 
      Actual  Predicted
-5      1.28    0.93660
-7      1.29    1.35300
-10     1.43    1.48950
-23     2.71    2.73705
-29     2.94    2.90800
+23     2.71     2.7406
+30     2.84     2.9412
+31     3.00     2.9568
+33     3.00     2.9914
+39     3.50     3.3698
 ..      ...        ...
-835    5.33    5.33000
-838    5.33    5.33000
-847    4.33    4.36855
-848    4.33    4.35925
-850    4.33    4.34725
+833    5.33     5.3300
+835    5.33     5.3300
+840    5.33     5.3080
+849    4.33     4.3300
+850    4.33     4.3300
 
-[171 rows x 2 columns]
-    Actual  Predicted
-5     1.28    0.93660
-7     1.29    1.35300
-10    1.43    1.48950
-23    2.71    2.73705
-29    2.94    2.90800
-30    2.84    2.94405
-31    3.00    2.96380
-33    3.00    2.99120
-39    3.50    3.38165
-49    1.53    1.49535
-54    2.48    2.44325
-63    3.98    3.77050
-65    3.99    3.88970
-66    3.99    3.87935
-67    3.97    3.86185
-72    3.23    3.26270
-76    2.44    2.52375
-77    1.98    2.44045
-78    1.45    2.35585
-81    1.49    2.03595
+[112 rows x 2 columns]
      Actual  Predicted
-744    0.39    0.38405
-750    0.65    0.60150
-751    0.66    0.80325
-765    1.69    1.62735
-767    1.82    1.85045
-773    2.27    2.24560
-786    1.55    1.49260
-792    0.09    0.08960
-800    0.07    0.07730
-804    0.10    0.08040
-806    0.08    0.08220
-815    1.21    0.83275
-816    1.68    1.82865
-818    2.56    2.96185
-828    5.12    5.13185
-835    5.33    5.33000
-838    5.33    5.33000
-847    4.33    4.36855
-848    4.33    4.35925
-850    4.33    4.34725
+23     2.71     2.7406
+30     2.84     2.9412
+31     3.00     2.9568
+33     3.00     2.9914
+39     3.50     3.3698
+49     1.53     1.3322
+63     3.98     3.7896
+65     3.99     3.8948
+66     3.99     3.8596
+67     3.97     3.8460
+72     3.23     3.3086
+76     2.44     2.5128
+77     1.98     2.4636
+78     1.45     2.3514
+86     1.88     2.1540
+96     2.71     2.7352
+109    3.49     3.0720
+110    3.48     3.4388
+120    3.42     3.4950
+136    4.10     4.1010
+     Actual  Predicted
+706    0.11     0.1322
+709    0.08     0.0874
+713    0.09     0.0772
+733    0.14     0.1364
+740    0.36     0.3734
+746    0.40     0.4034
+753    0.90     0.8332
+767    1.82     1.8212
+778    2.39     2.4098
+788    0.65     1.2410
+792    0.09     0.0796
+802    0.06     0.0732
+808    0.08     0.0800
+819    3.08     2.8986
+830    5.33     5.3216
+833    5.33     5.3300
+835    5.33     5.3300
+840    5.33     5.3080
+849    4.33     4.3300
+850    4.33     4.3300
 ```
 
 
