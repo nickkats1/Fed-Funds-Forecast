@@ -4,20 +4,6 @@
 ```bash
 pip install fredapi torch torchvision torchaudio numpy pandas sciki-learn matplotlib seaborn catboost xgboot-cpu mlflow
 ```
-#### Use Fred api key
-
-```python
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
-print(device)
-
-"""Interest Rates(Fed Funds Rate) """
-
-ffr = fred.get_series("FEDFUNDS")
-ffr.name = "Fed Funds Rate"
-
-data = pd.DataFrame(ffr).dropna()
-```
-
 
 
 ![federal_funds_rate_plot](images/fed-funds-rate.png)
@@ -60,7 +46,7 @@ loss_fn = nn.MSELoss()
 
 
 
-### Predicted Vs Actual Fed Funds Rate (BiLSTM)
+### Predicted Vs Actual Fed Funds Rate
 
 ```text
 Root Mean-Squared Error: 0.1664
@@ -112,7 +98,7 @@ Mean Absolute Percentage Error: 0.4118
 
 
 
-### Predicted VS Actual Fed Funds Rate using RandomForest
+### Predicted VS Actual Fed Funds Rate using Random Forest
 
 ```text
 Root Mean-Squared Error: 0.2901
