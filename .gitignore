@@ -33,7 +33,7 @@ profile.prof
 *.vscode
 .vscode/
 .idea/
-.spyproject
+
 
 # OS-Specific Files
 .DS_Store
