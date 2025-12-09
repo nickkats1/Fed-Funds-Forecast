@@ -6,11 +6,11 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import root_mean_squared_error,r2_score,mean_absolute_percentage_error
 from xgboost import XGBRegressor
 
-from scripts.data_ingestion import DataIngestion
-from scripts.data_transformation import DataTransformation
+from src.datasets.data_ingestion import DataIngestion
+from src.datasets.data_transformation import DataTransformation
 
-from helpers.config import load_config
-from helpers.logger import logger
+from tools.config import load_config
+from tools.logger import logger
 
 
 
